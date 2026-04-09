@@ -1,0 +1,20 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "orbital-compute",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-c",
+        "import os; os.chdir('/Users/pranav/Downloads'); from http.server import HTTPServer, SimpleHTTPRequestHandler; HTTPServer(('127.0.0.1', 8000), SimpleHTTPRequestHandler).serve_forever()"
+      ],
+      "port": 8000
+    },
+    {
+      "name": "spacefactories-static",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["/Users/pranav/Downloads/spacefactories/serve.py", "8001"],
+      "port": 8001
+    }
+  ]
+}

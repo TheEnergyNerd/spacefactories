@@ -1,0 +1,312 @@
+{
+  "parts": [
+    {
+      "name": "main_truss",
+      "file": "parts/main_truss.stl",
+      "color": [
+        0.550000011920929,
+        0.550000011920929,
+        0.5799999833106995
+      ],
+      "opacity": 1.0,
+      "description": "Main triangular truss \u2014 the 200 m primary structural spine. Three longerons, transverse rings every 5 m, face diagonals."
+    },
+    {
+      "name": "central_hub",
+      "file": "parts/central_hub.stl",
+      "color": [
+        0.2800000011920929,
+        0.2800000011920929,
+        0.30000001192092896
+      ],
+      "opacity": 1.0,
+      "description": "Central hub \u2014 avionics, power conditioning, propellant interfaces, and 4 radial Starship-class docking ports."
+    },
+    {
+      "name": "vacuum_pods",
+      "file": "parts/vacuum_pods.stl",
+      "color": [
+        0.10000000149011612,
+        0.18000000715255737,
+        0.44999998807907104
+      ],
+      "opacity": 1.0,
+      "description": "Vacuum-process pods (8). Open-aperture MBE / vapor deposition / ultra-clean semiconductor work. Mounted on the -Y (anti-sun) face to minimize UV soak, atomic-oxygen flux, and outgassing recapture."
+    },
+    {
+      "name": "vacuum_aperture_rings",
+      "file": "parts/vacuum_aperture_rings.stl",
+      "color": [
+        0.8500000238418579,
+        0.6499999761581421,
+        0.20000000298023224
+      ],
+      "opacity": 1.0,
+      "description": "Gold aperture rings \u2014 3 m circular openings on each vacuum pod's -Y face, the process chamber looking directly into deep space."
+    },
+    {
+      "name": "vacuum_local_radiators",
+      "file": "parts/vacuum_local_radiators.stl",
+      "color": [
+        0.9300000071525574,
+        0.9300000071525574,
+        0.949999988079071
+      ],
+      "opacity": 1.0,
+      "description": "Vacuum-pod local radiators \u2014 small \u00b1X panels per pod for dumping process heat without loading the station-level thermal bus."
+    },
+    {
+      "name": "vacuum_shutters",
+      "file": "parts/vacuum_shutters.stl",
+      "color": [
+        0.6499999761581421,
+        0.6499999761581421,
+        0.699999988079071
+      ],
+      "opacity": 1.0,
+      "description": "Aperture shutters (8) \u2014 half-open in the model. Each vacuum pod has a sliding shutter blade with rails and an actuator can. The shutter closes during reboosts, thruster firings, and docking approaches to protect the chamber from debris and thruster-plume contamination. A single contamination event without a shutter can ruin a chamber permanently."
+    },
+    {
+      "name": "vacuum_load_locks",
+      "file": "parts/vacuum_load_locks.stl",
+      "color": [
+        0.4000000059604645,
+        0.41999998688697815,
+        0.47999998927116394
+      ],
+      "opacity": 1.0,
+      "description": "Load-lock chambers (8) \u2014 small boxes on the +Y back of each vacuum pod with their own circular hatch flange. Substrates enter and leave via the load lock so the main process chamber never has to be re-vented to vacuum. Without a load lock the pod could grow exactly one wafer in its lifetime."
+    },
+    {
+      "name": "vacuum_cryocoolers",
+      "file": "parts/vacuum_cryocoolers.stl",
+      "color": [
+        0.8199999928474426,
+        0.8500000238418579,
+        0.9200000166893005
+      ],
+      "opacity": 1.0,
+      "description": "Cryocoolers (4, on MBE pods only) \u2014 compressor + cold-head + regulator on each MBE pod's -X face. Real MBE needs ~77 K cryopumping behind the source to keep background pressure ultralow. Passive radiators cannot reach 77 K \u2014 this is an active Stirling- or pulse-tube refrigerator."
+    },
+    {
+      "name": "vacuum_ram_baffles",
+      "file": "parts/vacuum_ram_baffles.stl",
+      "color": [
+        0.30000001192092896,
+        0.30000001192092896,
+        0.3400000035762787
+      ],
+      "opacity": 1.0,
+      "description": "Ram baffles (8) \u2014 small flat plates on the +Z (velocity) side of each pod. They shadow the aperture from atomic-oxygen flux and ram-direction debris. At 800 km AO is already four orders of magnitude below ISS, so these are a small refinement, but they would matter at lower altitudes."
+    },
+    {
+      "name": "microgravity_subtruss",
+      "file": "parts/microgravity_subtruss.stl",
+      "color": [
+        0.7400000095367432,
+        0.7400000095367432,
+        0.7799999713897705
+      ],
+      "opacity": 1.0,
+      "description": "Microgravity sub-truss \u2014 RELOCATED. The original architecture put this at the -Z end of the main truss (~115 m from CoM, where gravity-gradient acceleration is ~43 \u00b5g, two orders of magnitude above what microgravity science needs). It now extends along -X from a point next to the central hub at z \u2248 0 (the station CoM), putting the pods at r \u2248 16-25 m from CoM and reducing gravity-gradient acceleration to ~6-9 \u00b5g."
+    },
+    {
+      "name": "microgravity_pods",
+      "file": "parts/microgravity_pods.stl",
+      "color": [
+        0.8999999761581421,
+        0.8999999761581421,
+        0.9200000166893005
+      ],
+      "opacity": 1.0,
+      "description": "Microgravity-process pods (6) \u2014 sealed, controlled-environment payloads. Protein crystallization, ZBLAN fiber draw, alloy solidification. Now clustered tightly near the sub-truss midpoint (the point closest to the CoM), instead of spread along its length, to minimize internal gravity-gradient variation between pods."
+    },
+    {
+      "name": "microgravity_isolation_mounts",
+      "file": "parts/microgravity_isolation_mounts.stl",
+      "color": [
+        0.5,
+        0.5,
+        0.5199999809265137
+      ],
+      "opacity": 1.0,
+      "description": "Soft-mount tether bundle (6 tethers + 6 damper pucks) \u2014 the only mechanical link between the main truss and the \u00b5g sub-truss. Each tether is a long thin rod with a damper-puck soft-mount stage in the middle, representing ~0.1 Hz natural-frequency 6-DOF active isolation (e.g. ARIS-class). Rigid struts would transmit disturbance almost perfectly and defeat the entire purpose of the zone."
+    },
+    {
+      "name": "thermal_gradient_hot",
+      "file": "parts/thermal_gradient_hot.stl",
+      "color": [
+        0.9300000071525574,
+        0.44999998807907104,
+        0.10000000149011612
+      ],
+      "opacity": 1.0,
+      "description": "Thermal-gradient pods, HOT segment (+Y / sunward). Each pod has a 3 \u00d7 3 m sunward absorber plate sized to capture ~11 kW of solar flux (1361 W/m\u00b2 \u00d7 9 m\u00b2 \u00d7 ~0.9 absorptivity). The dawn-dusk SSO sun direction is essentially constant in the body frame, so no tracking gimbal is needed."
+    },
+    {
+      "name": "thermal_gradient_mid",
+      "file": "parts/thermal_gradient_mid.stl",
+      "color": [
+        0.550000011920929,
+        0.44999998807907104,
+        0.44999998807907104
+      ],
+      "opacity": 1.0,
+      "description": "Thermal-gradient pods, MID segment \u2014 transition zone between hot and cold ends. Direction-of-growth zone for directional solidification, melt-zone for zone refining. Wrapped in the MLI jacket so heat doesn't radiate sideways."
+    },
+    {
+      "name": "thermal_gradient_cold",
+      "file": "parts/thermal_gradient_cold.stl",
+      "color": [
+        0.20000000298023224,
+        0.44999998807907104,
+        0.8500000238418579
+      ],
+      "opacity": 1.0,
+      "description": "Thermal-gradient pods, COLD segment + 6 \u00d7 6 m radiator (-Y / anti-sun). The radiator was scaled up 4\u00d7 from the original 3 \u00d7 3 to actually be able to reject the absorbed solar input plus process heat (~17 kW at 300 K). Edge-on to the sun (normal \u00b1X) so it sees only deep space."
+    },
+    {
+      "name": "thermal_gradient_heat_pipes",
+      "file": "parts/thermal_gradient_heat_pipes.stl",
+      "color": [
+        0.8500000238418579,
+        0.550000011920929,
+        0.18000000715255737
+      ],
+      "opacity": 1.0,
+      "description": "Heat pipes (4 per pod, 16 total) \u2014 copper external tubes running the full length of each thermal-gradient pod, transporting heat from the hot absorber to the cold-end radiator. Solid conduction through the pod walls cannot move 11 kW over 12 m by orders of magnitude \u2014 heat pipes (or loop heat pipes with a working fluid) are the only realistic option for this geometry."
+    },
+    {
+      "name": "thermal_gradient_mli",
+      "file": "parts/thermal_gradient_mli.stl",
+      "color": [
+        0.9200000166893005,
+        0.8199999928474426,
+        0.41999998688697815
+      ],
+      "opacity": 0.550000011920929,
+      "description": "MLI insulation jacket \u2014 multi-layer insulation wrap covering the middle ~70 % of each thermal-gradient pod. Without it, heat would radiate sideways from the pod walls and the axial gradient would flatten before reaching the cold end. Real directional-solidification furnaces are heavily wrapped in MLI for the same reason."
+    },
+    {
+      "name": "solar_panels",
+      "file": "parts/solar_panels.stl",
+      "color": [
+        0.10000000149011612,
+        0.15000000596046448,
+        0.4000000059604645
+      ],
+      "opacity": 1.0,
+      "description": "Solar arrays \u2014 2 \u00d7 50 \u00d7 25 m wings, face-on to +Y sun. In a dawn-dusk SSO they're illuminated continuously and never need battery support beyond reaction-wheel buffering."
+    },
+    {
+      "name": "solar_cell_grid",
+      "file": "parts/solar_cell_grid.stl",
+      "color": [
+        0.8500000238418579,
+        0.699999988079071,
+        0.20000000298023224
+      ],
+      "opacity": 1.0,
+      "description": "Photovoltaic cell grid \u2014 schematic ribs indicating cell layout."
+    },
+    {
+      "name": "solar_booms",
+      "file": "parts/solar_booms.stl",
+      "color": [
+        0.5,
+        0.5,
+        0.5199999809265137
+      ],
+      "opacity": 1.0,
+      "description": "Solar array deployment booms \u2014 short booms that hold each wing outboard of the central hub along \u00b1X so the wings cannot shadow the thermal-gradient pods."
+    },
+    {
+      "name": "primary_radiators",
+      "file": "parts/primary_radiators.stl",
+      "color": [
+        0.9300000071525574,
+        0.9300000071525574,
+        0.949999988079071
+      ],
+      "opacity": 1.0,
+      "description": "Primary radiators \u2014 2 \u00d7 70 \u00d7 25 m panels, edge-on to the sun (normal \u00b1X). Edge-on orientation minimizes parasitic solar absorption, maximizing net heat rejection."
+    },
+    {
+      "name": "radiator_booms",
+      "file": "parts/radiator_booms.stl",
+      "color": [
+        0.5,
+        0.5,
+        0.5199999809265137
+      ],
+      "opacity": 1.0,
+      "description": "Radiator deployment booms \u2014 short \u00b1X booms holding each radiator panel outboard of the hub in the -Y shadow region."
+    },
+    {
+      "name": "thermal_bus_hot",
+      "file": "parts/thermal_bus_hot.stl",
+      "color": [
+        0.7799999713897705,
+        0.44999998807907104,
+        0.18000000715255737
+      ],
+      "opacity": 1.0,
+      "description": "Thermal bus, hot supply (copper). Routes warm coolant from the process pods to the central manifold and out to the radiators. Visually traced along the +X / -Y bottom longeron."
+    },
+    {
+      "name": "thermal_bus_cold",
+      "file": "parts/thermal_bus_cold.stl",
+      "color": [
+        0.550000011920929,
+        0.7799999713897705,
+        0.9200000166893005
+      ],
+      "opacity": 1.0,
+      "description": "Thermal bus, cold return (pale blue). Returns cold coolant from the radiators back to the pods. Routed along the -X / -Y bottom longeron, opposite the hot supply."
+    },
+    {
+      "name": "robotic_arm",
+      "file": "parts/robotic_arm.stl",
+      "color": [
+        0.9599999785423279,
+        0.8500000238418579,
+        0.10000000149011612
+      ],
+      "opacity": 1.0,
+      "description": "Robotic servicing rail + 3-segment arm. Linear rail along the +X face of the main truss. Does NOT extend onto the microgravity sub-truss \u2014 the arm itself is one of the loudest disturbance sources on the station."
+    },
+    {
+      "name": "adcs_cluster",
+      "file": "parts/adcs_cluster.stl",
+      "color": [
+        0.41999998688697815,
+        0.41999998688697815,
+        0.46000000834465027
+      ],
+      "opacity": 1.0,
+      "description": "ADCS cluster \u2014 reaction wheel housing, four corner thruster pods, star trackers, and antennas at the +Z end of the main truss."
+    },
+    {
+      "name": "spine_hull",
+      "file": "parts/spine_hull.stl",
+      "color": [
+        0.8799999952316284,
+        0.7799999713897705,
+        0.5
+      ],
+      "opacity": 0.30000001192092896,
+      "description": "Spine hull \u2014 unpressurized whipple-shield wrapper around the central section of the main truss. Encloses the central hub, the robotic rail and arm, the thermal bus piping, and the truss interior, giving them MMOD protection without the mass of a pressurized hull (~10 kg/m\u00b2 vs ~150). Cut with circular apertures on the -Y face for vacuum-pod openings, top + bottom holes for the thermal-gradient pods that span Y, and four radial holes for the docking ports. Stops short of the truss ends so the ADCS cluster and the microgravity transition stay exposed."
+    },
+    {
+      "name": "microgravity_hull",
+      "file": "parts/microgravity_hull.stl",
+      "color": [
+        0.8799999952316284,
+        0.7799999713897705,
+        0.5
+      ],
+      "opacity": 0.30000001192092896,
+      "description": "Microgravity hull \u2014 separate cylindrical whipple shield around the isolated microgravity sub-truss and its six sealed pods. Mechanically separate from the spine hull so the \u00b5g zone's vibration isolation is preserved. No cutouts: the \u00b5g pods are controlled-environment processes that don't need to see space, so they live entirely inside."
+    }
+  ]
+}
