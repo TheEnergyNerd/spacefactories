@@ -1048,80 +1048,130 @@ def build_thermal_bus():
 
 def build_robotic_system():
     """
-    Linear servicing rail running the length of the main truss, offset
-    0.6 m outboard on the +X face. Mobile base + 3 articulated segments +
-    end effector positioned at the truss midpoint. Does NOT extend onto
-    the microgravity sub-truss.
+    SSRMS/Canadarm2-class external servicing manipulator. A dual-tube
+    translation rail runs the length of the spine hull on its +X exterior
+    (outside the hull, not inside the truss), supported by standoff
+    brackets. A mobile base carriage rides the rail. On top of the
+    carriage sits a 7-DOF arm with prominent joint housings (yaw turret,
+    shoulder pitch, shoulder roll, elbow, wrist pitch, wrist yaw, wrist
+    roll) and chunky boom segments. The arm lives in a near-horizontal
+    plane so it can reach around to the -Y face and service the vacuum
+    pods, or up to +Y to grapple a visiting vehicle.
     """
     parts = []
 
-    main_verts = triangle_vertices(MAIN_TRUSS_SIDE)
-    # +X corner of the bottom edge
-    rx_corner = main_verts[2][0]
-    ry_corner = main_verts[2][1]
-    # Rail offset 0.6 m outboard (further +X) of the longeron
-    rail_x = rx_corner + RAIL_OFFSET
-    rail_y = ry_corner
+    # Put the rail OUTSIDE the spine hull on the +X face so the arm has
+    # room to articulate and actually reach the external payload bays.
+    rail_x = HULL_R_OUT + 0.80
+    rail_y = 0.0
 
-    # Two parallel rail tubes
-    for dy in (-0.18, 0.18):
+    # ----- Dual-tube translation rail (two parallel 0.22 m tubes) -----
+    RAIL_TUBE_DIA = 0.22
+    RAIL_TUBE_SPACING = 0.90  # 0.45 m off centerline in ±Y
+    rail_z_min = -MAIN_TRUSS_LENGTH / 2.0 + 6.0
+    rail_z_max =  MAIN_TRUSS_LENGTH / 2.0 - 6.0
+    for dy in (-RAIL_TUBE_SPACING / 2.0, +RAIL_TUBE_SPACING / 2.0):
         parts.append(cyl(
-            (rail_x, rail_y + dy, -MAIN_TRUSS_LENGTH / 2.0),
-            (rail_x, rail_y + dy,  MAIN_TRUSS_LENGTH / 2.0),
-            RAIL_DIA,
+            (rail_x, rail_y + dy, rail_z_min),
+            (rail_x, rail_y + dy, rail_z_max),
+            RAIL_TUBE_DIA,
         ))
 
-    # ----- Mobile base carriage on the rail -----
-    base_x = rail_x + 0.70
-    base_y = rail_y
-    base_z = 0.0
-    parts.append(box(1.6, 1.2, 1.2, center=(base_x, base_y, base_z)))
+    # ----- Standoff brackets tying the rail to the hull -----
+    n_brackets = 9
+    for i in range(n_brackets):
+        t = i / (n_brackets - 1)
+        bz = rail_z_min + t * (rail_z_max - rail_z_min)
+        # Strut from hull (+X side) out to the rail
+        parts.append(box(
+            rail_x - HULL_R_OUT + 0.10, 1.10, 0.30,
+            center=((HULL_R_OUT + rail_x) / 2.0, rail_y, bz),
+        ))
 
-    # ----- Turret (yaw) — short vertical cylinder on top of the base -----
-    turret_top_z = base_z + 0.60 + 0.40
+    # ----- Mobile base carriage riding the rail -----
+    base_cx = rail_x + 1.10        # carriage centroid sits outside the rail
+    base_cy = rail_y
+    base_cz = 0.0
+    parts.append(box(1.80, 2.40, 2.20, center=(base_cx, base_cy, base_cz)))
+    # Bogie saddles hugging the rail tubes
+    for dy in (-RAIL_TUBE_SPACING / 2.0, +RAIL_TUBE_SPACING / 2.0):
+        parts.append(box(
+            1.50, 0.55, 0.55,
+            center=((rail_x + base_cx - 0.40) / 2.0, rail_y + dy, 0.0),
+        ))
+
+    # ----- 7-DOF arm on top of the carriage ------------------------------
+    # Joint centers (kept mostly in the XY plane so hinge axes along Z
+    # give clean vertical-drum housings). Dimensions are beefy: this thing
+    # has a ~12 m reach, on the scale of Canadarm2.
+    turret_base_z = base_cz + 1.10 + 0.20
+    turret_top_z  = turret_base_z + 1.20
+
+    # Yaw turret (axis along Z)
     parts.append(cq.Solid.makeCylinder(
-        0.35, 0.80,
-        Vector(base_x, base_y, base_z + 0.60),
+        0.70, 1.20,
+        Vector(base_cx + 0.60, base_cy, turret_base_z),
         Vector(0, 0, 1),
     ))
 
-    # ----- Shoulder pivot (hinge axis along Y, perpendicular to arm plane) -----
-    # The arm lives in the XZ plane so each joint is a horizontal pin along Y.
-    shoulder = (base_x + 0.00, base_y, turret_top_z)
-    elbow    = (base_x + 3.00, base_y, turret_top_z + 2.20)
-    wrist    = (base_x + 5.80, base_y, turret_top_z + 0.40)
-    tcp      = (base_x + 6.80, base_y, turret_top_z - 0.40)
+    # Arm path (all joints at z = turret_top_z, hinge axes along Z)
+    shoulder = (base_cx + 0.60, base_cy + 0.00, turret_top_z)
+    bicep    = (base_cx + 1.80, base_cy - 1.80, turret_top_z)  # shoulder-roll offset
+    elbow    = (base_cx + 5.80, base_cy - 4.60, turret_top_z)
+    wrist    = (base_cx + 9.20, base_cy - 6.40, turret_top_z)
+    wrist2   = (base_cx + 10.20, base_cy - 7.00, turret_top_z)
+    tcp      = (base_cx + 10.90, base_cy - 7.60, turret_top_z)
 
-    def hinge(center, radius, length):
-        # Hinge cylinder centered on `center`, axis along +Y
+    def hinge_z(center, radius, length):
+        """Prominent joint housing, axis along Z (vertical drum)."""
         return cq.Solid.makeCylinder(
             radius, length,
-            Vector(center[0], center[1] - length / 2.0, center[2]),
-            Vector(0, 1, 0),
+            Vector(center[0], center[1], center[2] - length / 2.0),
+            Vector(0, 0, 1),
         )
 
-    parts.append(hinge(shoulder, 0.28, 0.70))
-    parts.append(hinge(elbow,    0.24, 0.60))
-    parts.append(hinge(wrist,    0.20, 0.50))
+    # Joint housings — each is WIDER than the boom that enters it so they
+    # read clearly as joints (this was the main visual failure of the
+    # previous arm: the hinges were smaller than the links).
+    parts.append(hinge_z(shoulder, 0.85, 1.30))   # shoulder pitch
+    parts.append(hinge_z(bicep,    0.75, 1.15))   # shoulder roll
+    parts.append(hinge_z(elbow,    0.70, 1.10))   # elbow
+    parts.append(hinge_z(wrist,    0.55, 0.90))   # wrist pitch
+    parts.append(hinge_z(wrist2,   0.45, 0.75))   # wrist yaw
 
-    # ----- Arm links (upper arm, forearm, end-effector boom) -----
-    parts.append(cyl(shoulder, elbow, 0.22))
-    parts.append(cyl(elbow,    wrist, 0.18))
-    parts.append(cyl(wrist,    tcp,   0.14))
+    # Boom segments (upper arm, forearm, wrist boom). Thick tubes.
+    parts.append(cyl(shoulder, bicep, 0.38))      # shoulder link
+    parts.append(cyl(bicep,    elbow, 0.42))      # upper arm / bicep
+    parts.append(cyl(elbow,    wrist, 0.36))      # forearm
+    parts.append(cyl(wrist,    wrist2, 0.28))     # wrist link
+    parts.append(cyl(wrist2,   tcp,   0.22))      # end-effector boom
 
-    # ----- Grapple end effector (cylindrical tool + fingers) -----
-    # Tool body
-    tool_dir = Vector(tcp[0] - wrist[0], tcp[1] - wrist[1], tcp[2] - wrist[2])
+    # ----- LEE-class end effector (large cylindrical grapple tool) -----
+    tool_dir = Vector(
+        tcp[0] - wrist2[0], tcp[1] - wrist2[1], tcp[2] - wrist2[2],
+    )
     parts.append(cq.Solid.makeCylinder(
-        0.18, 0.40,
+        0.40, 1.10,
         Vector(tcp[0], tcp[1], tcp[2]),
         tool_dir,
     ))
-    # Two grapple fingers extending past the tool tip
-    finger_tip1 = (tcp[0] + 0.55, tcp[1] + 0.12, tcp[2] - 0.25)
-    finger_tip2 = (tcp[0] + 0.55, tcp[1] - 0.12, tcp[2] - 0.25)
-    parts.append(cyl(tcp, finger_tip1, 0.05))
-    parts.append(cyl(tcp, finger_tip2, 0.05))
+    # Three snare fingers projecting past the tool tip
+    tdx, tdy = tool_dir.x, tool_dir.y
+    tlen = math.hypot(tdx, tdy) or 1.0
+    fwd = (tdx / tlen, tdy / tlen)
+    side = (-fwd[1], fwd[0])
+    finger_len = 0.80
+    for s in (-0.25, 0.0, 0.25):
+        tip = (
+            tcp[0] + fwd[0] * finger_len + side[0] * s,
+            tcp[1] + fwd[1] * finger_len + side[1] * s,
+            tcp[2],
+        )
+        parts.append(cyl(
+            (tcp[0] + fwd[0] * 0.55, tcp[1] + fwd[1] * 0.55, tcp[2]),
+            tip,
+            0.07,
+        ))
 
     return to_compound(parts)
 
