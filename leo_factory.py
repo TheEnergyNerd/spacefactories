@@ -1071,29 +1071,57 @@ def build_robotic_system():
             RAIL_DIA,
         ))
 
-    # Mobile base at z=0
-    base = box(1.4, 1.0, 1.0, center=(rail_x + 0.6, rail_y, 0.0))
-    parts.append(base)
+    # ----- Mobile base carriage on the rail -----
+    base_x = rail_x + 0.70
+    base_y = rail_y
+    base_z = 0.0
+    parts.append(box(1.6, 1.2, 1.2, center=(base_x, base_y, base_z)))
 
-    # Articulated arm: shoulder, upper, fore, end-effector
-    p0 = (rail_x + 0.6, rail_y, 0.5)
-    p1 = (rail_x + 0.6 + 1.5, rail_y + 1.5, 1.5)
-    p2 = (rail_x + 0.6 + 3.0, rail_y + 3.0, 0.5)
-    p3 = (rail_x + 0.6 + 4.5, rail_y + 4.0, -0.5)
+    # ----- Turret (yaw) — short vertical cylinder on top of the base -----
+    turret_top_z = base_z + 0.60 + 0.40
+    parts.append(cq.Solid.makeCylinder(
+        0.35, 0.80,
+        Vector(base_x, base_y, base_z + 0.60),
+        Vector(0, 0, 1),
+    ))
 
-    parts.append(cyl(p0, p1, 0.25))
-    parts.append(cyl(p1, p2, 0.20))
-    parts.append(cyl(p2, p3, 0.16))
+    # ----- Shoulder pivot (hinge axis along Y, perpendicular to arm plane) -----
+    # The arm lives in the XZ plane so each joint is a horizontal pin along Y.
+    shoulder = (base_x + 0.00, base_y, turret_top_z)
+    elbow    = (base_x + 3.00, base_y, turret_top_z + 2.20)
+    wrist    = (base_x + 5.80, base_y, turret_top_z + 0.40)
+    tcp      = (base_x + 6.80, base_y, turret_top_z - 0.40)
 
-    # End effector
-    ee = cq.Solid.makeBox(0.4, 0.4, 0.4,
-                          Vector(p3[0] - 0.2, p3[1] - 0.2, p3[2] - 0.2))
-    parts.append(ee)
+    def hinge(center, radius, length):
+        # Hinge cylinder centered on `center`, axis along +Y
+        return cq.Solid.makeCylinder(
+            radius, length,
+            Vector(center[0], center[1] - length / 2.0, center[2]),
+            Vector(0, 1, 0),
+        )
 
-    # Joint cylinders
-    for jp in (p1, p2, p3):
-        parts.append(cq.Solid.makeCylinder(
-            0.18, 0.30, Vector(jp[0], jp[1], jp[2] - 0.15), Vector(0, 0, 1)))
+    parts.append(hinge(shoulder, 0.28, 0.70))
+    parts.append(hinge(elbow,    0.24, 0.60))
+    parts.append(hinge(wrist,    0.20, 0.50))
+
+    # ----- Arm links (upper arm, forearm, end-effector boom) -----
+    parts.append(cyl(shoulder, elbow, 0.22))
+    parts.append(cyl(elbow,    wrist, 0.18))
+    parts.append(cyl(wrist,    tcp,   0.14))
+
+    # ----- Grapple end effector (cylindrical tool + fingers) -----
+    # Tool body
+    tool_dir = Vector(tcp[0] - wrist[0], tcp[1] - wrist[1], tcp[2] - wrist[2])
+    parts.append(cq.Solid.makeCylinder(
+        0.18, 0.40,
+        Vector(tcp[0], tcp[1], tcp[2]),
+        tool_dir,
+    ))
+    # Two grapple fingers extending past the tool tip
+    finger_tip1 = (tcp[0] + 0.55, tcp[1] + 0.12, tcp[2] - 0.25)
+    finger_tip2 = (tcp[0] + 0.55, tcp[1] - 0.12, tcp[2] - 0.25)
+    parts.append(cyl(tcp, finger_tip1, 0.05))
+    parts.append(cyl(tcp, finger_tip2, 0.05))
 
     return to_compound(parts)
 
