@@ -19,146 +19,284 @@ import os
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import matplotlib.patheffects as pe
 from matplotlib.lines import Line2D
 
 
-# ----- Drawing style ---------------------------------------------------------
-LINE_BLACK = "#111111"
-LINE_THIN  = 0.6
-LINE_MED   = 1.0
-LINE_THICK = 1.6
-DIM_COLOR  = "#444444"
-HIDDEN     = (4, 3)
-CENTER     = (8, 2, 1, 2)
+# ----- Stylized blueprint / HUD palette --------------------------------------
+PAGE_BG     = "#06121f"   # deep navy
+PANEL_BG    = "#0a1a2c"
+GRID_COLOR  = "#163455"
+EDGE_COLOR  = "#3fbcff"   # cyan frame
+PRIMARY     = "#eaf6ff"   # near-white primary linework
+SECONDARY   = "#7ec8ff"   # cyan secondary
+DIM_COLOR   = "#79a8c9"   # dim text / dimensions
+ACCENT      = "#ffb454"   # amber callouts
+HIGHLIGHT   = "#ff5d7a"   # magenta accents
+GLOW        = "#3fbcff"
+
+LINE_THIN  = 0.7
+LINE_MED   = 1.2
+LINE_THICK = 1.9
+CENTER     = (6, 2, 1, 2)
 FONT_DIM   = 7
-FONT_LBL   = 8
-FONT_TITLE = 10
-PAGE_BG    = "white"
+FONT_LBL   = 9
+FONT_TITLE = 11
+
+plt.rcParams["font.family"] = "monospace"
+plt.rcParams["font.monospace"] = ["DejaVu Sans Mono", "Menlo", "Courier New"]
 
 OUT_DIR = "drawings"
 os.makedirs(OUT_DIR, exist_ok=True)
+
+GLOW_FX = [pe.Stroke(linewidth=2.6, foreground=GLOW, alpha=0.20),
+           pe.Normal()]
 
 
 # =============================================================================
 # Drafting helpers
 # =============================================================================
+def _grid(ax, xlim, ylim, step=None):
+    """Faint cyan engineering grid with brighter major ticks every 5 lines."""
+    dx = xlim[1] - xlim[0]
+    dy = ylim[1] - ylim[0]
+    if step is None:
+        # Aim for ~30 minor lines across the larger dimension
+        step = max(dx, dy) / 30.0
+        # Snap to a friendly value
+        for s in (0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50):
+            if s >= step:
+                step = s
+                break
+    x0 = math.floor(xlim[0] / step) * step
+    y0 = math.floor(ylim[0] / step) * step
+    n = 0
+    x = x0
+    while x <= xlim[1]:
+        major = (round(x / step) % 5 == 0)
+        ax.add_line(Line2D(
+            [x, x], [ylim[0], ylim[1]],
+            color=GRID_COLOR, linewidth=0.8 if major else 0.4,
+            alpha=0.85 if major else 0.55, zorder=0,
+        ))
+        x += step
+        n += 1
+    y = y0
+    while y <= ylim[1]:
+        major = (round(y / step) % 5 == 0)
+        ax.add_line(Line2D(
+            [xlim[0], xlim[1]], [y, y],
+            color=GRID_COLOR, linewidth=0.8 if major else 0.4,
+            alpha=0.85 if major else 0.55, zorder=0,
+        ))
+        y += step
+
+
+def _corner_brackets(ax, xlim, ylim, frac=0.04):
+    """L-shaped HUD brackets at the four corners of a view panel."""
+    dx = xlim[1] - xlim[0]
+    dy = ylim[1] - ylim[0]
+    L = min(dx, dy) * frac
+    corners = [
+        (xlim[0], ylim[0],  +1, +1),
+        (xlim[1], ylim[0],  -1, +1),
+        (xlim[0], ylim[1],  +1, -1),
+        (xlim[1], ylim[1],  -1, -1),
+    ]
+    for (x, y, sx, sy) in corners:
+        ax.add_line(Line2D([x, x + sx * L], [y, y],
+                           color=EDGE_COLOR, linewidth=1.6, zorder=5))
+        ax.add_line(Line2D([x, x], [y, y + sy * L],
+                           color=EDGE_COLOR, linewidth=1.6, zorder=5))
+
+
 def setup_axes(ax, xlim, ylim, title=None):
     ax.set_xlim(*xlim)
     ax.set_ylim(*ylim)
     ax.set_aspect("equal")
-    ax.set_facecolor(PAGE_BG)
+    ax.set_facecolor(PANEL_BG)
     for s in ax.spines.values():
         s.set_visible(False)
     ax.set_xticks([])
     ax.set_yticks([])
+    _grid(ax, xlim, ylim)
+    _corner_brackets(ax, xlim, ylim)
     if title:
         ax.text(
-            0.5, -0.06, title,
+            0.015, 0.965, "▌ " + title,
             transform=ax.transAxes,
-            ha="center", va="top",
+            ha="left", va="top",
             fontsize=FONT_LBL, fontweight="bold",
-            color=LINE_BLACK,
+            color=EDGE_COLOR,
+            path_effects=GLOW_FX,
         )
 
 
-def rect(ax, cx, cy, w, h, lw=LINE_MED, ls="solid"):
+def rect(ax, cx, cy, w, h, lw=LINE_MED, ls="solid", color=PRIMARY):
     ax.add_patch(mpatches.Rectangle(
         (cx - w / 2.0, cy - h / 2.0), w, h,
-        fill=False, edgecolor=LINE_BLACK, linewidth=lw, linestyle=ls,
+        fill=False, edgecolor=color, linewidth=lw, linestyle=ls,
+        zorder=3, path_effects=GLOW_FX,
     ))
 
 
-def circle(ax, cx, cy, r, lw=LINE_MED, ls="solid"):
+def circle(ax, cx, cy, r, lw=LINE_MED, ls="solid", color=PRIMARY):
     ax.add_patch(mpatches.Circle(
         (cx, cy), r, fill=False,
-        edgecolor=LINE_BLACK, linewidth=lw, linestyle=ls,
+        edgecolor=color, linewidth=lw, linestyle=ls,
+        zorder=3, path_effects=GLOW_FX,
     ))
 
 
-def line(ax, x1, y1, x2, y2, lw=LINE_MED, ls="solid", color=LINE_BLACK):
-    ax.add_line(Line2D([x1, x2], [y1, y2],
-                       color=color, linewidth=lw, linestyle=ls))
+def line(ax, x1, y1, x2, y2, lw=LINE_MED, ls="solid", color=PRIMARY,
+         glow=True):
+    ln = Line2D([x1, x2], [y1, y2],
+                color=color, linewidth=lw, linestyle=ls, zorder=3)
+    if glow:
+        ln.set_path_effects(GLOW_FX)
+    ax.add_line(ln)
 
 
 def centerline(ax, x1, y1, x2, y2):
     ax.add_line(Line2D([x1, x2], [y1, y2],
-                       color=LINE_BLACK, linewidth=LINE_THIN,
-                       linestyle=(0, CENTER)))
+                       color=SECONDARY, linewidth=LINE_THIN,
+                       linestyle=(0, CENTER), alpha=0.7, zorder=2))
 
 
 def hdim(ax, x1, x2, y, label, offset=0.0, tick=0.4):
-    """Horizontal dimension line with arrowheads and label."""
     yl = y + offset
     ax.annotate(
         "", xy=(x1, yl), xytext=(x2, yl),
-        arrowprops=dict(arrowstyle="<->", color=DIM_COLOR, lw=LINE_THIN),
+        arrowprops=dict(arrowstyle="<|-|>", color=DIM_COLOR,
+                        lw=LINE_THIN, mutation_scale=8),
     )
     line(ax, x1, yl - tick / 2, x1, yl + tick / 2,
-         lw=LINE_THIN, color=DIM_COLOR)
+         lw=LINE_THIN, color=DIM_COLOR, glow=False)
     line(ax, x2, yl - tick / 2, x2, yl + tick / 2,
-         lw=LINE_THIN, color=DIM_COLOR)
+         lw=LINE_THIN, color=DIM_COLOR, glow=False)
     ax.text((x1 + x2) / 2.0, yl + tick * 0.6, label,
             ha="center", va="bottom",
-            fontsize=FONT_DIM, color=DIM_COLOR)
+            fontsize=FONT_DIM, color=ACCENT, fontweight="bold")
 
 
 def vdim(ax, y1, y2, x, label, offset=0.0, tick=0.4):
     xl = x + offset
     ax.annotate(
         "", xy=(xl, y1), xytext=(xl, y2),
-        arrowprops=dict(arrowstyle="<->", color=DIM_COLOR, lw=LINE_THIN),
+        arrowprops=dict(arrowstyle="<|-|>", color=DIM_COLOR,
+                        lw=LINE_THIN, mutation_scale=8),
     )
     line(ax, xl - tick / 2, y1, xl + tick / 2, y1,
-         lw=LINE_THIN, color=DIM_COLOR)
+         lw=LINE_THIN, color=DIM_COLOR, glow=False)
     line(ax, xl - tick / 2, y2, xl + tick / 2, y2,
-         lw=LINE_THIN, color=DIM_COLOR)
+         lw=LINE_THIN, color=DIM_COLOR, glow=False)
     ax.text(xl + tick * 0.6, (y1 + y2) / 2.0, label,
             ha="left", va="center", rotation=90,
-            fontsize=FONT_DIM, color=DIM_COLOR)
+            fontsize=FONT_DIM, color=ACCENT, fontweight="bold")
 
 
 def leader(ax, x, y, tx, ty, label):
+    # Small filled "target" dot at the leader anchor
+    ax.add_patch(mpatches.Circle(
+        (x, y), max(0.06, abs(tx - x) * 0.005),
+        facecolor=ACCENT, edgecolor=ACCENT, zorder=4,
+    ))
     ax.annotate(
         "", xy=(x, y), xytext=(tx, ty),
-        arrowprops=dict(arrowstyle="-", color=DIM_COLOR, lw=LINE_THIN),
+        arrowprops=dict(arrowstyle="-", color=ACCENT,
+                        lw=LINE_THIN, alpha=0.95),
     )
     ax.text(tx, ty, " " + label,
             ha="left", va="center",
-            fontsize=FONT_DIM, color=LINE_BLACK)
+            fontsize=FONT_DIM, color=ACCENT, fontweight="bold")
 
 
-def title_block(fig, part_name, part_no, scale, units="meters"):
-    """Drafting title block in the lower right corner."""
-    ax = fig.add_axes([0.62, 0.02, 0.36, 0.10])
-    ax.set_xlim(0, 1)
-    ax.set_ylim(0, 1)
+def title_block(fig, part_name, part_no, scale, units="METERS"):
+    """Stylized HUD title block in the lower right corner."""
+    ax = fig.add_axes([0.55, 0.015, 0.43, 0.115])
+    ax.set_xlim(0, 1); ax.set_ylim(0, 1)
     ax.set_xticks([]); ax.set_yticks([])
+    ax.set_facecolor(PANEL_BG)
     for s in ax.spines.values():
-        s.set_color(LINE_BLACK)
-        s.set_linewidth(LINE_MED)
-    # Internal grid
-    line(ax, 0, 0.5, 1, 0.5, lw=LINE_THIN)
-    line(ax, 0.55, 0, 0.55, 1, lw=LINE_THIN)
-    line(ax, 0.78, 0, 0.78, 0.5, lw=LINE_THIN)
+        s.set_color(EDGE_COLOR); s.set_linewidth(1.4)
 
-    ax.text(0.02, 0.78, "PART", fontsize=6, color=DIM_COLOR)
-    ax.text(0.02, 0.58, part_name, fontsize=FONT_TITLE, fontweight="bold")
-    ax.text(0.02, 0.28, "PROJECT", fontsize=6, color=DIM_COLOR)
-    ax.text(0.02, 0.08, "LEO Factory Station", fontsize=8)
+    # Top accent bar
+    ax.add_patch(mpatches.Rectangle((0, 0.86), 1, 0.14,
+                                    facecolor=EDGE_COLOR, edgecolor="none"))
+    ax.text(0.015, 0.93, "▮ ORBITAL FACTORY DIVISION   ::   "
+                          "DRAWING CONTROL", fontsize=7,
+            color=PAGE_BG, fontweight="bold", va="center")
 
-    ax.text(0.57, 0.78, "PART NO", fontsize=6, color=DIM_COLOR)
-    ax.text(0.57, 0.58, part_no, fontsize=9)
-    ax.text(0.57, 0.28, "UNITS", fontsize=6, color=DIM_COLOR)
-    ax.text(0.57, 0.08, units, fontsize=8)
+    # Internal dividers
+    line(ax, 0, 0.43, 1, 0.43, lw=0.8, color=EDGE_COLOR, glow=False)
+    line(ax, 0.55, 0, 0.55, 0.86, lw=0.8, color=EDGE_COLOR, glow=False)
+    line(ax, 0.78, 0, 0.78, 0.43, lw=0.8, color=EDGE_COLOR, glow=False)
 
-    ax.text(0.80, 0.78, "SCALE", fontsize=6, color=DIM_COLOR)
-    ax.text(0.80, 0.58, scale, fontsize=9)
-    ax.text(0.80, 0.28, "REV", fontsize=6, color=DIM_COLOR)
-    ax.text(0.80, 0.08, "A", fontsize=8)
+    ax.text(0.02, 0.69, "PART", fontsize=6, color=DIM_COLOR)
+    ax.text(0.02, 0.50, part_name, fontsize=FONT_TITLE,
+            color=PRIMARY, fontweight="bold")
+    ax.text(0.02, 0.26, "PROJECT", fontsize=6, color=DIM_COLOR)
+    ax.text(0.02, 0.07, "LEO FACTORY STATION", fontsize=8, color=PRIMARY)
+
+    ax.text(0.57, 0.69, "PART NO", fontsize=6, color=DIM_COLOR)
+    ax.text(0.57, 0.50, part_no, fontsize=9, color=ACCENT, fontweight="bold")
+    ax.text(0.57, 0.26, "UNITS", fontsize=6, color=DIM_COLOR)
+    ax.text(0.57, 0.07, units, fontsize=8, color=PRIMARY)
+
+    ax.text(0.80, 0.69, "SCALE", fontsize=6, color=DIM_COLOR)
+    ax.text(0.80, 0.50, scale, fontsize=9, color=ACCENT, fontweight="bold")
+    ax.text(0.80, 0.26, "REV", fontsize=6, color=DIM_COLOR)
+    ax.text(0.80, 0.07, "A", fontsize=8, color=PRIMARY)
 
 
-def page(fig_w=14, fig_h=10):
+def page(fig_w=14, fig_h=10, sheet_title="GENERAL ARRANGEMENT"):
     fig = plt.figure(figsize=(fig_w, fig_h), facecolor=PAGE_BG)
+
+    # Outer frame with corner brackets
+    frame = fig.add_axes([0, 0, 1, 1])
+    frame.set_xlim(0, 1); frame.set_ylim(0, 1)
+    frame.set_xticks([]); frame.set_yticks([])
+    frame.set_facecolor(PAGE_BG)
+    for s in frame.spines.values():
+        s.set_visible(False)
+    # Inner border rectangle
+    frame.add_patch(mpatches.Rectangle(
+        (0.012, 0.012), 0.976, 0.976,
+        fill=False, edgecolor=EDGE_COLOR, linewidth=1.2,
+    ))
+    # Corner brackets
+    cb = 0.025
+    for (x, y, sx, sy) in [
+        (0.012, 0.012,  +1, +1),
+        (0.988, 0.012,  -1, +1),
+        (0.012, 0.988,  +1, -1),
+        (0.988, 0.988,  -1, -1),
+    ]:
+        frame.add_line(Line2D([x, x + sx * cb], [y, y],
+                              color=EDGE_COLOR, linewidth=2.4))
+        frame.add_line(Line2D([x, x], [y, y + sy * cb * (fig_w / fig_h)],
+                              color=EDGE_COLOR, linewidth=2.4))
+    # Header strip
+    frame.add_patch(mpatches.Rectangle(
+        (0.012, 0.945), 0.976, 0.043,
+        facecolor=PANEL_BG, edgecolor=EDGE_COLOR, linewidth=1.0,
+    ))
+    frame.text(0.025, 0.967, "◆ LEO FACTORY STATION   //   "
+                              "ENGINEERING DRAWING SET",
+               fontsize=9, color=EDGE_COLOR, fontweight="bold",
+               va="center", path_effects=GLOW_FX)
+    frame.text(0.975, 0.967, sheet_title + "   ◆",
+               fontsize=9, color=ACCENT, fontweight="bold",
+               va="center", ha="right")
+    # Tick marks across the top frame
+    for i in range(1, 40):
+        x = 0.012 + i * (0.976 / 40)
+        major = (i % 5 == 0)
+        frame.add_line(Line2D(
+            [x, x], [0.945, 0.945 - (0.012 if major else 0.006)],
+            color=EDGE_COLOR, linewidth=0.6, alpha=0.6,
+        ))
+    frame.set_zorder(-10)
     return fig
 
 
@@ -279,9 +417,9 @@ def draw_robotic_arm():
 
     # Coordinate triad
     ax.annotate("", xy=(-1.2, 3.2), xytext=(-1.2, 2.2),
-                arrowprops=dict(arrowstyle="->", color=LINE_BLACK))
+                arrowprops=dict(arrowstyle="->", color=PRIMARY))
     ax.annotate("", xy=(-0.2, 2.2), xytext=(-1.2, 2.2),
-                arrowprops=dict(arrowstyle="->", color=LINE_BLACK))
+                arrowprops=dict(arrowstyle="->", color=PRIMARY))
     ax.text(-0.05, 2.2, "+X", fontsize=FONT_DIM)
     ax.text(-1.2, 3.35, "+Y", fontsize=FONT_DIM, ha="center")
 
@@ -625,20 +763,24 @@ def draw_station_overview():
         rect(ax2, dx, -2, 4, 14, lw=LINE_MED)
     # +Y arrow (sun)
     ax2.annotate("", xy=(0, 22), xytext=(0, 14),
-                 arrowprops=dict(arrowstyle="->", color=LINE_BLACK))
+                 arrowprops=dict(arrowstyle="->", color=PRIMARY))
     ax2.text(0.6, 22, "+Y  SUN", fontsize=FONT_DIM)
     # -Y label (vacuum face)
     ax2.text(0.6, -20, "-Y  DEEP SPACE / VACUUM PODS",
              fontsize=FONT_DIM)
 
     # ---- KEY FACTS BLOCK ----
-    ax3 = fig.add_axes([0.55, 0.06, 0.43, 0.42])
+    ax3 = fig.add_axes([0.55, 0.16, 0.43, 0.32])
     ax3.set_xlim(0, 1); ax3.set_ylim(0, 1)
     ax3.set_xticks([]); ax3.set_yticks([])
+    ax3.set_facecolor(PANEL_BG)
     for s in ax3.spines.values():
-        s.set_color(LINE_BLACK); s.set_linewidth(LINE_MED)
-    ax3.text(0.04, 0.92, "KEY DIMENSIONS", fontsize=FONT_TITLE,
-             fontweight="bold")
+        s.set_color(EDGE_COLOR); s.set_linewidth(1.2)
+    # Header bar
+    ax3.add_patch(mpatches.Rectangle((0, 0.88), 1, 0.12,
+                                     facecolor=EDGE_COLOR, edgecolor="none"))
+    ax3.text(0.025, 0.94, "▮ KEY DIMENSIONS", fontsize=FONT_TITLE,
+             color=PAGE_BG, fontweight="bold", va="center")
     facts = [
         ("Main truss",          "200 m × 5 m equilateral"),
         ("Spine hull",          "160 m × Ø9.1 m whipple"),
@@ -653,9 +795,14 @@ def draw_station_overview():
         ("Operations",          "Robot-only, unpressurized"),
     ]
     for i, (k, v) in enumerate(facts):
-        y = 0.84 - i * 0.075
-        ax3.text(0.04, y, k, fontsize=FONT_LBL, color=DIM_COLOR)
-        ax3.text(0.42, y, v, fontsize=FONT_LBL)
+        y = 0.80 - i * 0.072
+        # Faint row separator
+        ax3.add_line(Line2D([0.025, 0.975], [y - 0.024, y - 0.024],
+                            color=GRID_COLOR, linewidth=0.5, alpha=0.7))
+        ax3.text(0.04, y, "› " + k.upper(), fontsize=FONT_LBL,
+                 color=SECONDARY)
+        ax3.text(0.42, y, v, fontsize=FONT_LBL,
+                 color=PRIMARY, fontweight="bold")
 
     title_block(fig, "Station General Arrangement",
                 "LFS-GA-001", "1:1500")
