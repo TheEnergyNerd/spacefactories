@@ -184,6 +184,9 @@ def render_view(pieces, view, out_path, sheet_title,
         pieces = [p for p in pieces if p[3] in focus_only]
     if not pieces:
         return
+    # Draw opaque parts first, transparent parts last so the hulls /
+    # MLI jackets layer correctly over their contents.
+    pieces = sorted(pieces, key=lambda p: -p[2][3])
 
     all_verts = np.concatenate([p[0] for p in pieces], axis=0)
     cmin = all_verts.min(0)
@@ -211,12 +214,15 @@ def render_view(pieces, view, out_path, sheet_title,
     for verts, tris, rgba, _name in pieces:
         triangles = verts[tris]
         r, g, b, a = rgba
-        # Brighten cool, slightly desaturate, and add glowing edges
+        # Brighten cool, slightly desaturate, and add glowing edges.
+        # Respect the source alpha so semi-transparent parts (hulls,
+        # MLI jackets, etc.) stay see-through instead of occluding
+        # the components they protect.
         face = (
             min(1.0, r * 0.85 + 0.10),
             min(1.0, g * 0.90 + 0.13),
             min(1.0, b * 0.95 + 0.18),
-            max(0.55, a),
+            a,
         )
         coll = Poly3DCollection(
             triangles,
@@ -274,9 +280,11 @@ PART_GROUPS = {
     "microgravity": {
         "name": "Microgravity Sub-Truss",
         "no":   "LFS-MG-001",
+        # Hull omitted on purpose so the sub-truss / pods / soft tethers
+        # are visible. Cf. station_* views which include the hull.
         "parts": {
             "microgravity_subtruss", "microgravity_pods",
-            "microgravity_isolation_mounts", "microgravity_hull",
+            "microgravity_isolation_mounts",
         },
     },
 }
